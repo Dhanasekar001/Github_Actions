@@ -5,9 +5,13 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ new-ci-workflow ]
+    branches:
+      - new-ci-workflow
+      - master
   pull_request:
-    branches: [ new-ci-workflow ]
+    branches: 
+      - new-ci-workflow
+      - master
 
 jobs:
   build-java:
