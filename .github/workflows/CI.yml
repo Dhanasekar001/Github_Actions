@@ -71,6 +71,7 @@ jobs:
         while ((docker version | Out-Null) -ne 0) { Start-Sleep -Seconds 5 }
 
     - name: Build and Push Docker Image
+      if: success()
       run: |
         docker build -t dhana20/demo-app:v1 .
         docker tag dhana20/demo-app:v1 dhana20/demo-app:latest
