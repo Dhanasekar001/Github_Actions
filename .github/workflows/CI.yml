@@ -1,24 +1,22 @@
-# This workflow will build a Java project with Gradle and run Docker builds on Ubuntu, Windows, and macOS.
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Java CI with Gradle and Docker
+name: Java CI with Gradle
 
 on:
   push:
-    branches:
-      - new-ci-workflow
+    branches: 
       - master
+      - new-ci-workflow   # Including both master and new-ci-workflow branches
   pull_request:
     branches: 
-      - new-ci-workflow
       - master
+      - new-ci-workflow   # Including both master and new-ci-workflow branches
 
 jobs:
   build-java:
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v2
@@ -29,7 +27,6 @@ jobs:
         java-version: 1.8
 
     - name: Grant execute permission for gradlew
-      if: runner.os == 'Linux' || runner.os == 'macOS'  # Only grant permissions on Unix-based systems
       run: chmod +x gradlew
 
     - name: Build with Gradle
@@ -38,46 +35,12 @@ jobs:
     - name: Check Build Output
       run: ls -R ./build/libs  # This step will verify if the JAR file is present
 
-  build-and-push-docker:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-    needs: build-java
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-
-    # Install Docker on macOS
-    - name: Set up Docker on macOS
-      if: runner.os == 'macOS'
-      run: |
-        brew install --cask docker
-        open /Applications/Docker.app # This command opens Docker Desktop on macOS
-        # Wait until Docker Desktop is running
-        while ! docker system info > /dev/null 2>&1; do sleep 1; done
-
-    # Install Docker on Windows
-    - name: Set up Docker on Windows
-      if: runner.os == 'Windows'
-      run: |
-        choco install docker-desktop --pre
-        Start-Service docker # Start Docker service
-        # Ensure Docker is running
-        while ((docker version | Out-Null) -ne 0) { Start-Sleep -Seconds 5 }
-
     - name: Build and Push Docker Image
-      if: success()
-      run: |
-        docker build -t dhana20/demo-app:v1 .
-        docker tag dhana20/demo-app:v1 dhana20/demo-app:latest
-        echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-        docker push dhana20/demo-app:v1
-        docker push dhana20/demo-app:latest
-      env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      uses: mr-smithers-excellent/docker-build-push@v4
+      with:
+        image: dhana20/demo-app
+        tags: v1, latest
+        registry: docker.io
+        dockerfile: Dockerfile
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
