@@ -39,7 +39,6 @@ jobs:
       uses: mr-smithers-excellent/docker-build-push@v4
       with:
         image: dhana20/demo-app
-        tags: v1, latest
         registry: docker.io
         dockerfile: Dockerfile
         username: ${{ secrets.DOCKER_USERNAME }}
